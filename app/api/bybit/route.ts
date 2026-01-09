@@ -14,9 +14,24 @@ export async function GET() {
 
     const text = await res.text();
 
-    // 👇 если Bybit вернул HTML — не ломаем билд
+    // Если Bybit вернул HTML (Cloudflare / блокировка)
     if (text.startsWith("<")) {
       return NextResponse.json([]);
     }
 
-    const data = JSON.parse(tex
+    const data = JSON.parse(text);
+
+    if (!data?.result?.list) {
+      return NextResponse.json([]);
+    }
+
+    const coins = data.result.list.map((c: any) => ({
+      symbol: c.symbol,
+      priceChangePercent: Number(c.price24hPcnt) * 100,
+    }));
+
+    return NextResponse.json(coins);
+  } catch (error) {
+    return NextResponse.json([]);
+  }
+}
