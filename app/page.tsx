@@ -18,7 +18,7 @@ export default function Page() {
       ws.send(
         JSON.stringify({
           op: "subscribe",
-          args: ["tickers.BTCUSDT", "tickers.ETHUSDT", "tickers.SOLUSDT"]
+          args: ["tickers.BTCUSDT", "tickers.ETHUSDT", "tickers.SOLUSDT"],
         })
       );
     };
@@ -26,13 +26,13 @@ export default function Page() {
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
 
-      if (data?.data) {
+      if (data && data.data) {
         const c = data.data;
 
         setCoins((prev) => {
-          const filtered = prev.filter((x) => x.symbol !== c.symbol);
+          const rest = prev.filter((x) => x.symbol !== c.symbol);
           return [
-            ...filtered,
+            ...rest,
             {
               symbol: c.symbol,
               priceChangePercent: Number(c.price24hPcnt) * 100,
@@ -44,7 +44,13 @@ export default function Page() {
       }
     };
 
-    return () => ws.close();
+    ws.onerror = () => {
+      setLoading(false);
+    };
+
+    return () => {
+      ws.close();
+    };
   }, []);
 
   return (
@@ -53,7 +59,7 @@ export default function Page() {
         background: "#0b0f14",
         minHeight: "100vh",
         padding: 20,
-        fontFamily: "Inter, system-ui, sans-serif",
+        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont",
       }}
     >
       <h1 style={{ color: "white", marginBottom: 20 }}>
@@ -62,7 +68,7 @@ export default function Page() {
 
       {loading && (
         <div style={{ color: "#9ca3af" }}>
-          Loading market data...
+          Loading market data…
         </div>
       )}
 
@@ -109,8 +115,5 @@ export default function Page() {
         })}
       </div>
     </main>
-  );
-}
-
   );
 }
