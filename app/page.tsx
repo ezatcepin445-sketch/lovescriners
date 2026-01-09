@@ -1,28 +1,51 @@
 "use client";
 
-export const dynamic = "force-dynamic";
+import { useEffect, useState } from "react";
 
 type Coin = {
   symbol: string;
   priceChangePercent: string;
 };
 
-async function getCoins(): Promise<Coin[]> {
-  const res = await fetch(
-    "https://api.binance.com/api/v3/ticker/24hr",
-    { cache: "no-store" }
-  );
-  return res.json();
-}
+export default function Page() {
+  const [coins, setCoins] = useState<Coin[]>([]);
+  const [loading, setLoading] = useState(true);
 
-export default async function Page() {
-  const coins = await getCoins();
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await fetch(
+          "https://api.binance.com/api/v3/ticker/24hr"
+        );
+        const data = await res.json();
+
+        // ✅ защита от ошибки Binance
+        if (Array.isArray(data)) {
+          setCoins(data);
+        } else {
+          console.error("Binance error:", data);
+          setCoins([]);
+        }
+      } catch (e) {
+        console.error(e);
+        setCoins([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    load();
+  }, []);
 
   return (
     <main style={{ background: "#0b0f14", minHeight: "100vh", padding: 20 }}>
       <h1 style={{ color: "white", marginBottom: 20 }}>
         ❤️ LoveScriner
       </h1>
+
+      {loading && (
+        <div style={{ color: "#9ca3af" }}>Loading market...</div>
+      )}
 
       <div
         style={{
@@ -32,7 +55,7 @@ export default async function Page() {
         }}
       >
         {coins.slice(0, 24).map((c) => {
-          const change = parseFloat(c.priceChangePercent);
+          const change = Number(c.priceChangePercent);
 
           return (
             <div
@@ -46,6 +69,7 @@ export default async function Page() {
               }}
             >
               <strong>{c.symbol}</strong>
+
               <div
                 style={{
                   color: change >= 0 ? "#22c55e" : "#ef4444",
@@ -67,4 +91,5 @@ export default async function Page() {
     </main>
   );
 }
+
 
