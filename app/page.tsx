@@ -15,7 +15,7 @@ export default function Page() {
     async function load() {
       try {
         const res = await fetch(
-          fetch("/api/binance")
+          fetch("/api/bybit")
         );
         const data = await res.json();
 
