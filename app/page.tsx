@@ -4,13 +4,12 @@ import { useEffect, useState } from "react";
 
 type Coin = {
   symbol: string;
-  price: number;
-  change: number;
-  history: number[];
+  priceChangePercent: number;
 };
 
 export default function Page() {
-  const [coins, setCoins] = useState<Record<string, Coin>>({});
+  const [coins, setCoins] = useState<Coin[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const ws = new WebSocket("wss://stream.bybit.com/v5/public/spot");
@@ -19,56 +18,52 @@ export default function Page() {
       ws.send(
         JSON.stringify({
           op: "subscribe",
-          args: ["tickers.*"],
+          args: ["tickers.BTCUSDT", "tickers.ETHUSDT", "tickers.SOLUSDT"]
         })
       );
     };
 
     ws.onmessage = (event) => {
-      const msg = JSON.parse(event.data);
-      if (!msg?.data) return;
+      const data = JSON.parse(event.data);
 
-      const list = Array.isArray(msg.data) ? msg.data : [msg.data];
+      if (data?.data) {
+        const c = data.data;
 
-      setCoins((prev) => {
-        const updated = { ...prev };
+        setCoins((prev) => {
+          const filtered = prev.filter((x) => x.symbol !== c.symbol);
+          return [
+            ...filtered,
+            {
+              symbol: c.symbol,
+              priceChangePercent: Number(c.price24hPcnt) * 100,
+            },
+          ];
+        });
 
-        for (const t of list) {
-          const symbol = t.symbol;
-          const price = Number(t.lastPrice);
-          const change = Number(t.price24hPcnt) * 100;
-
-          if (!symbol || !price) continue;
-
-          const history = updated[symbol]
-            ? [...updated[symbol].history.slice(-19), price]
-            : [price];
-
-          updated[symbol] = {
-            symbol,
-            price,
-            change,
-            history,
-          };
-        }
-
-        return updated;
-      });
+        setLoading(false);
+      }
     };
 
     return () => ws.close();
   }, []);
 
-  const coinsArray = Object.values(coins).slice(0, 24);
-
   return (
-    <main style={{ background: "#0b0f14", minHeight: "100vh", padding: 20 }}>
+    <main
+      style={{
+        background: "#0b0f14",
+        minHeight: "100vh",
+        padding: 20,
+        fontFamily: "Inter, system-ui, sans-serif",
+      }}
+    >
       <h1 style={{ color: "white", marginBottom: 20 }}>
         ❤️ LoveScriner
       </h1>
 
-      {coinsArray.length === 0 && (
-        <div style={{ color: "#64748b" }}>Loading market...</div>
+      {loading && (
+        <div style={{ color: "#9ca3af" }}>
+          Loading market data...
+        </div>
       )}
 
       <div
@@ -76,49 +71,43 @@ export default function Page() {
           display: "grid",
           gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
           gap: 14,
+          marginTop: 20,
         }}
       >
-        {coinsArray.map((c) => (
-          <div
-            key={c.symbol}
-            style={{
-              background: "#020617",
-              border: "1px solid #1f2937",
-              borderRadius: 14,
-              padding: 14,
-              color: "white",
-            }}
-          >
-            <strong>{c.symbol}</strong>
+        {coins.map((c) => {
+          const change = c.priceChangePercent;
 
-            <div style={{ fontSize: 13, marginTop: 4 }}>
-              ${c.price.toFixed(6)}
-            </div>
-
+          return (
             <div
+              key={c.symbol}
               style={{
-                color: c.change >= 0 ? "#22c55e" : "#ef4444",
-                marginTop: 6,
+                background: "#020617",
+                border: "1px solid #1f2937",
+                borderRadius: 14,
+                padding: 14,
+                color: "white",
               }}
             >
-              {c.change.toFixed(2)}%
+              <strong>{c.symbol}</strong>
+
+              <div
+                style={{
+                  marginTop: 6,
+                  color: change >= 0 ? "#22c55e" : "#ef4444",
+                }}
+              >
+                {change.toFixed(2)}%
+              </div>
+
+              {change > 5 && (
+                <div style={{ marginTop: 8, color: "#22c55e" }}>
+                  🚀 PUMPING
+                </div>
+              )}
             </div>
-
-            {c.change > 10 && (
-              <div style={{ marginTop: 6, color: "#22c55e" }}>
-                🚀 PUMPING
-              </div>
-            )}
-
-            {c.change < -10 && (
-              <div style={{ marginTop: 6, color: "#ef4444" }}>
-                💀 DUMPING
-              </div>
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </main>
   );
 }
-
