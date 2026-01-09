@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 
 type Coin = {
   symbol: string;
@@ -27,25 +26,22 @@ export default function Page() {
 
     ws.onmessage = (event) => {
       const msg = JSON.parse(event.data);
-
       if (!msg?.data) return;
 
-      const data = Array.isArray(msg.data) ? msg.data : [msg.data];
+      const list = Array.isArray(msg.data) ? msg.data : [msg.data];
 
       setCoins((prev) => {
         const updated = { ...prev };
 
-        for (const t of data) {
+        for (const t of list) {
           const symbol = t.symbol;
-          const price = parseFloat(t.lastPrice || "0");
-          const change = parseFloat(t.price24hPcnt || "0") * 100;
+          const price = Number(t.lastPrice);
+          const change = Number(t.price24hPcnt) * 100;
 
           if (!symbol || !price) continue;
 
-          const prevCoin = updated[symbol];
-
-          const history = prevCoin
-            ? [...prevCoin.history.slice(-19), price]
+          const history = updated[symbol]
+            ? [...updated[symbol].history.slice(-19), price]
             : [price];
 
           updated[symbol] = {
@@ -66,14 +62,7 @@ export default function Page() {
   const coinsArray = Object.values(coins).slice(0, 24);
 
   return (
-    <main
-      style={{
-        background: "#0b0f14",
-        minHeight: "100vh",
-        padding: 20,
-        fontFamily: "Inter, sans-serif",
-      }}
-    >
+    <main style={{ background: "#0b0f14", minHeight: "100vh", padding: 20 }}>
       <h1 style={{ color: "white", marginBottom: 20 }}>
         ❤️ LoveScriner
       </h1>
@@ -90,11 +79,8 @@ export default function Page() {
         }}
       >
         {coinsArray.map((c) => (
-          <motion.div
+          <div
             key={c.symbol}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
             style={{
               background: "#020617",
               border: "1px solid #1f2937",
@@ -118,19 +104,6 @@ export default function Page() {
               {c.change.toFixed(2)}%
             </div>
 
-            {/* mini chart */}
-            <svg width="100%" height="40" style={{ marginTop: 8 }}>
-              <polyline
-                fill="none"
-                stroke={c.change >= 0 ? "#22c55e" : "#ef4444"}
-                strokeWidth="2"
-                points={c.history
-                  .map((p, i) => `${i * 10},${40 - p}`)
-                  .join(" ")}
-              />
-            </svg>
-
-            {/* badges */}
             {c.change > 10 && (
               <div style={{ marginTop: 6, color: "#22c55e" }}>
                 🚀 PUMPING
@@ -142,21 +115,10 @@ export default function Page() {
                 💀 DUMPING
               </div>
             )}
-
-            {Math.abs(c.change) > 15 && (
-              <div style={{ marginTop: 4, color: "#facc15" }}>
-                ⚠️ HIGH RISK
-              </div>
-            )}
-
-            {c.history.length < 5 && (
-              <div style={{ marginTop: 4, color: "#38bdf8" }}>
-                🆕 NEW
-              </div>
-            )}
-          </motion.div>
+          </div>
         ))}
       </div>
     </main>
   );
 }
+
