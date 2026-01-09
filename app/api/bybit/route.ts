@@ -1,20 +1,22 @@
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET() {
-  const res = await fetch(
-    "https://api.bybit.com/v5/market/tickers?category=spot"
-  );
+  try {
+    const res = await fetch(
+      "https://api.bybit.com/v5/market/tickers?category=spot",
+      {
+        cache: "no-store",
+      }
+    );
 
-  const data = await res.json();
+    const text = await res.text();
 
-  if (!data?.result?.list) {
-    return NextResponse.json([]);
-  }
+    // 👇 если Bybit вернул HTML — не ломаем билд
+    if (text.startsWith("<")) {
+      return NextResponse.json([]);
+    }
 
-  const coins = data.result.list.map((c: any) => ({
-    symbol: c.symbol,
-    priceChangePercent: Number(c.price24hPcnt) * 100,
-  }));
-
-  return NextResponse.json(coins);
-}
+    const data = JSON.parse(tex
