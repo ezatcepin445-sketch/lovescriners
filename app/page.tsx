@@ -2,6 +2,8 @@
 
 import React from "react";
 
+export const dynamic = "force-dynamic";
+
 type Coin = {
   symbol: string;
   priceChangePercent: number;
@@ -9,12 +11,19 @@ type Coin = {
 
 export default function Page() {
   const [coins, setCoins] = React.useState<Coin[]>([]);
+  const [error, setError] = React.useState(false);
 
   React.useEffect(() => {
     fetch("/api/bybit")
       .then((res) => res.json())
-      .then(setCoins)
-      .catch(console.error);
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setCoins(data);
+        } else {
+          setError(true);
+        }
+      })
+      .catch(() => setError(true));
   }, []);
 
   return (
@@ -22,6 +31,12 @@ export default function Page() {
       <h1 style={{ color: "white", marginBottom: 20 }}>
         ❤️ LoveScriner
       </h1>
+
+      {error && (
+        <div style={{ color: "#ef4444" }}>
+          Ошибка загрузки данных
+        </div>
+      )}
 
       <div
         style={{
