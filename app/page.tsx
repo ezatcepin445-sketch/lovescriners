@@ -1,40 +1,22 @@
-"use client";
+import React from "react";
 
-import { useEffect, useState } from "react";
+"use client";
 
 type Coin = {
   symbol: string;
-  priceChangePercent: string;
+  priceChangePercent: number;
 };
 
+async function getCoins(): Promise<Coin[]> {
+  const res = await fetch("/api/bybit");
+  return res.json();
+}
+
 export default function Page() {
-  const [coins, setCoins] = useState<Coin[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [coins, setCoins] = React.useState<Coin[]>([]);
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const res = await fetch(
-          fetch("/api/bybit")
-        );
-        const data = await res.json();
-
-        // ✅ защита от ошибки Binance
-        if (Array.isArray(data)) {
-          setCoins(data);
-        } else {
-          console.error("Binance error:", data);
-          setCoins([]);
-        }
-      } catch (e) {
-        console.error(e);
-        setCoins([]);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    load();
+  React.useEffect(() => {
+    getCoins().then(setCoins);
   }, []);
 
   return (
@@ -42,10 +24,6 @@ export default function Page() {
       <h1 style={{ color: "white", marginBottom: 20 }}>
         ❤️ LoveScriner
       </h1>
-
-      {loading && (
-        <div style={{ color: "#9ca3af" }}>Loading market...</div>
-      )}
 
       <div
         style={{
@@ -55,7 +33,7 @@ export default function Page() {
         }}
       >
         {coins.slice(0, 24).map((c) => {
-          const change = Number(c.priceChangePercent);
+          const change = c.priceChangePercent;
 
           return (
             <div
@@ -69,7 +47,6 @@ export default function Page() {
               }}
             >
               <strong>{c.symbol}</strong>
-
               <div
                 style={{
                   color: change >= 0 ? "#22c55e" : "#ef4444",
@@ -90,6 +67,8 @@ export default function Page() {
       </div>
     </main>
   );
+}
+
 }
 
 
