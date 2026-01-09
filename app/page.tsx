@@ -15,7 +15,7 @@ export default function Page() {
     async function load() {
       try {
         const res = await fetch(
-          "https://api.binance.com/api/v3/ticker/24hr"
+          fetch("/api/binance")
         );
         const data = await res.json();
 
