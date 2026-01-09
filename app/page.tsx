@@ -1,22 +1,20 @@
-import React from "react";
-
 "use client";
+
+import React from "react";
 
 type Coin = {
   symbol: string;
   priceChangePercent: number;
 };
 
-async function getCoins(): Promise<Coin[]> {
-  const res = await fetch("/api/bybit");
-  return res.json();
-}
-
 export default function Page() {
   const [coins, setCoins] = React.useState<Coin[]>([]);
 
   React.useEffect(() => {
-    getCoins().then(setCoins);
+    fetch("/api/bybit")
+      .then((res) => res.json())
+      .then(setCoins)
+      .catch(console.error);
   }, []);
 
   return (
@@ -67,8 +65,6 @@ export default function Page() {
       </div>
     </main>
   );
-}
-
 }
 
 
