@@ -7,6 +7,10 @@ export async function GET() {
 
   const data = await res.json();
 
+  if (!data?.result?.list) {
+    return NextResponse.json([]);
+  }
+
   const coins = data.result.list.map((c: any) => ({
     symbol: c.symbol,
     priceChangePercent: Number(c.price24hPcnt) * 100,
