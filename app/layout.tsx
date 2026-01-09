@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 export const metadata = {
   title: "LoveScriner",
 };
@@ -5,12 +7,11 @@ export const metadata = {
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <html lang="ru">
-      <body style={{ margin: 0 }}>{children}</body>
+      <body>{children}</body>
     </html>
   );
 }
-
